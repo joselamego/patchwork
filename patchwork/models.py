@@ -994,8 +994,9 @@ def _series_supersede_previous_patches(series):
             patch_name = Series(series).revisions()[i].ordered_patches()[l]\
 .name
             # don't process v# or [##/##] in patch name
-            striped_name = re.sub('\s*\[v*\d*\s*\d*/*\d*\s*v*\d*\]\s*', '',\
- patch_name)
+            striped_name_pre = re.sub('^(\[(v\d\d* )*(\d\d*/\d\d*\s*)*(v\d\d*)*\
+\])*', '', patch_name, flags=re.IGNORECASE)
+            striped_name = re.sub('(\(v\d\d*\))*(v\d\d*)*\s*$', '', striped_name_pre, flags=re.IGNORECASE)
             # add patch revision-name-id to list
             processed_patches.append(("rev_%s" % (i + 1) , striped_name,\
  patch_id, i, l))
