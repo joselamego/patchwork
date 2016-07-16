@@ -983,9 +983,9 @@ def _series_supersede_previous_patches(series):
     # If there is only one revision for the series, we have nothing to do
     if total_series_revs < 2:
         return
-    # process latest two revisions
+    # process all patches in series
     processed_patches = []
-    for i in range((total_series_revs - 2), (total_series_revs)):
+    for i in range(0, (total_series_revs)):
         total_rev_patches = len(Series(series).revisions()[i]\
 .ordered_patches())
         # process all patches in current revision
@@ -995,8 +995,8 @@ def _series_supersede_previous_patches(series):
 .name
             # don't process v# or [##/##] in patch name
             striped_name_pre = re.sub('^(\[(v\d\d* )*(\d\d*/\d\d*\s*)*(v\d\d*)*\
-\])*', '', patch_name, flags=re.IGNORECASE)
-            striped_name = re.sub('(\(v\d\d*\))*(v\d\d*)*\s*$', '', striped_name_pre, flags=re.IGNORECASE)
+\]\s*)*', '', patch_name, flags=re.IGNORECASE)
+            striped_name = re.sub('(\s*\(v\d\d*\)\s*)*(\s*v\d\d*)*\s*$', '', striped_name_pre, flags=re.IGNORECASE)
             # add patch revision-name-id to list
             processed_patches.append(("rev_%s" % (i + 1) , striped_name,\
  patch_id, i, l))
