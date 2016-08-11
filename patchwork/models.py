@@ -640,7 +640,10 @@ class SeriesRevision(models.Model):
            exclude_patch (a list of 'order's) can be used to exclude
            patches from the operation"""
         new = self.duplicate_meta()
-        order = 0
+        if p.order:
+            order = p.order
+        else:
+            order = 0
         for p in self.ordered_patches():
             order += 1
             if order in exclude_patches:
