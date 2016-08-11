@@ -425,6 +425,9 @@ def find_content(project, mail):
 
     if is_cover_letter:
         ret.revision.cover_letter = clean_content(commentbuf)
+        ret.comment = Comment(date=mail_date(mail),
+                              content=clean_content(commentbuf),
+                              headers=mail_headers(mail))
         return ret
 
     if commentbuf:
