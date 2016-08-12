@@ -395,7 +395,8 @@ def find_content(project, mail):
     drop_patch = not is_attachment and \
         project.git_send_email_only and not is_git_send_email(mail)
 
-    if pullurl or (is_patch and not drop_patch):
+    if (project.git_send_email_only and pullurl) or (
+            is_patch and not drop_patch):
         ret.patch_order = x or 1
         ret.patch = Patch(name=name, pull_url=pullurl, content=patchbuf,
                           date=mail_date(mail), headers=mail_headers(mail))
