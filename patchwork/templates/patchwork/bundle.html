@@ -11,13 +11,52 @@
 
 {% block body %}
 
-<p>This bundle contains patches for the {{ bundle.project.linkname }}
-project.</p>
-
-<p><a href="{% url 'patchwork.views.bundle.mbox' username=bundle.owner.username bundlename=bundle.name %}">Download bundle as mbox</a></p>
+  <div class="container-fluid">
+    <h1>
+      {{bundle.name }}
+    </h1>
+    {% if bundle.public_url %}
+      <a href={{ bundle.public_url }} class="btn btn-link" role="button">
+        Public URL: {{ bundle.public_url }}
+      </a>
+    {% else %}
+      <p>This bundle is not public</p>
+    {% endif %}
+  </div>
+  <nav class="navbar navbar-default" role="navigation" id="series-navigation">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse2">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <div class="btn-group navbar-btn navbar-left">
+        <button class="btn btn-default patchBtn">
+          Patches ({{ bundle.n_patches }})
+        </button>
+        <button class="btn btn-default buildsBtn">
+          Builds
+          <span class="label label-danger">
+            fail
+          </span>
+        </button>
+      </div>
+      <div class="btn-group navbar-btn navbar-right">
+        <a href="{% url 'patchwork.views.bundle.mbox' username=bundle.owner.username bundlename=bundle.name %}" class="btn btn-default">
+          Download Bundle
+        </a>
+        {% if bundleform %}
+          <button class="btn btn-default editBtn">Edit bundle</button>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
 
 {% if bundleform %}
-<form method="post">
+<form class="wizard-edit" method="post">
  {% csrf_token %}
  <input type="hidden" name="form" value="bundle"/>
 <table class="form">
@@ -39,6 +78,10 @@ project.</p>
 <div style="clear: both; padding: 1em;"></div>
 {% endif %}
 
+<div class="patchesView">
 {% include "patchwork/patch-list.html" %}
+</div>
+
+{% include "patchwork/bundle-tests.html" %}
 
 {% endblock %}

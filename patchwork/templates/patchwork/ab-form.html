@@ -1,0 +1,43 @@
+{% load static %}
+
+<div class="wizard-test">
+  <div class="navbar navbar-default">
+  <table class="form">
+
+  <form role="form" action="">
+    <div class="row setup-content">
+      <div class="col-xs-6 col-md-offset-3">
+        <div class="col-md-12">
+          <h2>Start new Build Test</h2>
+          <div class="form-group">
+            <label class="control-label">Local repository path:</label>
+            <input maxlength="100" required="required" class="form-control" placeholder="/home/{{user}}/poky" type="text">
+          </div>
+          <div class="form-group">
+            <label class="control-label">Base Branch to checkout from:</label>
+            <input maxlength="100" required="required" class="form-control" placeholder="Master" type="text">
+          </div>
+          <div class="form-group">
+            <label class="control-label">Base Commit to checkout from:</label>
+            <input maxlength="100" required="required" class="form-control" placeholder="HEAD" type="text">
+          </div>
+          <div class="form-group">
+            <label class="control-label">New Test Branch name:</label>
+            <input maxlength="100" required="required" class="form-control" placeholder={{user}}/{{bundle.name}} type="text">
+          </div>
+          <div class="form-group">
+            <label class="control-label">Autobuilder url:</label>
+            <input maxlength="100" required="required" class="form-control" placeholder="https://autobuilder.yoctoproject.org" type="text">
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="">Create test branch only, do not build.</label>
+          </div>
+          <button class="btn btn-default startBtn" type="submit">Start Build</button>
+        </div>
+        <div style="clear: both; padding: 1em;"></div>
+      </div>
+    </div>
+    </form>
+  </table>
+  </div>
+</div>

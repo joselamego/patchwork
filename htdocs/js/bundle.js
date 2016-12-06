@@ -1,3 +1,35 @@
+$(document).ready(function () {
+  var editForm = $('.wizard-edit'),
+      editBtn = $('.editBtn'),
+      patchForms = $('.patchforms'),
+      buildView = $('#bundle-tests'),
+      patchesView = $('.patchesView'),
+      buildsBtn = $('.buildsBtn'),
+      patchBtn = $('.patchBtn');
+
+  editForm.hide();
+  buildView.hide();
+
+  editBtn.click(function(){
+      buildView.hide()
+      editForm.toggle()
+      patchesView.show()
+      if ( editForm.is(':visible') ) { patchForms.hide() }
+      else { patchForms.toggle() }
+  });
+
+  patchBtn.click(function(){
+      buildView.hide()
+      editForm.hide()
+      patchesView.show()
+      patchForms.show()
+  });
+  buildsBtn.click(function(){
+      buildView.show()
+      editForm.hide()
+      patchesView.hide()
+  });
+});
 
 var editing_order = false;
 var dragging = false;
