@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Patchwork - automated patch tracking system
 # Copyright (C) 2008 Jeremy Kerr <jk@ozlabs.org>
@@ -19,6 +19,7 @@
 # along with Patchwork; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+source /home/oe-patchwork/environment/bin/activate
 BIN_DIR=`dirname $0`
 PATCHWORK_BASE=`readlink -e $BIN_DIR/../..`
 
