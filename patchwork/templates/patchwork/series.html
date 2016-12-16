@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load person %}
+{% load static %}
 
 {% block title %}{{project.name}}{% endblock %}
 {% block headers %}
@@ -9,64 +10,70 @@ $(function () {
     pw.setup_series({ patches: 'series-patchlist' });
 });
 </script>
+<script type="text/javascript" src="{% static "js/series.js" %}"></script>
 {% endblock %}
 
 {% block body %}
-<h1>{{ series.name }}</h1>
+  <h1>{{ series.name }}</h1>
 
-<div class="core-info">
-  <span>Submitted by {{ series.submitter|personify:project }} on {{ series.submitted }}</span>
-</div>
+  <div class="core-info">
+    <span data-toggle="tooltip" title="View all patches submitted by this user">Submitted by {{ series.submitter|personify:project }} on {{ series.submitted }}</span>
+    <span>|</span>
+    <span>Reviewer: {{ series.reviewer }}</span>
+    <span>|</span>
+    <span>Updated on: {{ series.last_updated }}</span>
+    <span>|</span>
+    <span>Series ID: <strong>{{ series.pk }}</strong></span>
+  </div>
 
-<h2>Details</h2>
+  <nav class="navbar navbar-default" role="navigation" id="series-navigation">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse2">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <div class="collapse navbar-collapse" id="navbar-collapse2">
+        <ul class="nav navbar-nav">
+          <li>
+            <select id="revs-list" data-toggle="tooltip" title="Select a Series Revision">
+              {% for revision in revisions %}
+                <option {% if forloop.last %}selected="selected"{%endif%} value='rev{{ revision.version }}'>
+                  Revision <strong>{{ revision.version }}</strong>
+                </option>
+              {% endfor %}
+            </select>
+          </li>
+          <li id="cover-letter-tab">
+            <a href="#" data-toggle="tooltip" title="View the Cover Letter if available">Cover letter</a>
+          </li>
+          <li id="patches-tab">
+            <a href="#" data-toggle="tooltip" title="List patches from selected revision">
+              Patches ({{ series.latest_revision.n_patches }})
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-<table class="patchmeta">
-  <tr>
-    <th>Reviewer</th>
-{% if series.reviewer %}
-    <td>{{ series.reviewer.name }}</td>
-{% else %}
-    <td><em class="text-muted">None</em></td>
-{% endif %}
-  </tr>
-  <tr>
-    <th>Submitted</th>
-    <td>{{ series.submitted }}</td>
-  </tr>
-  <tr>
-    <th>Last Updated</th>
-    <td>{{ series.last_updated }}</td>
-  </tr>
-  <tr>
-    <th>Revision</th>
-    <td>{{ series.last_revision.version }}</td>
-  </tr>
-</table>
-
+  <div id="cover-letter-view">
 {% if cover_letter %}
-<h2>Cover Letter</h2>
-
-<div class="comment">
-  <pre class="content">
-{{ cover_letter }}
-  </pre>
-</div>
-
+  <h2>Cover Letter</h2>
+  <div class="comment">
+    <pre class="content">
+      {{ cover_letter }}
+    </pre>
+  </div>
+{% else %}
+  <h2 style="color:#909090">No cover letter was found for this series.</h2>
 {% endif %}
+  </div>
 
-<h2>Revisions</h2>
-
-<div>
-
-  <ul class="nav nav-pills small-pills" data-tabs="tabs" role="tablist">
-{% for revision in revisions %}
-    <li role="presentation"{% if forloop.last %} class="active"{%endif%}>
-      <a data-toggle="pill" href="#rev{{ revision.version }}">rev {{ revision.version }}</a>
-    </li>
-{% endfor %}
-  </ul>
-
-  <div class="tab-content">
+  <div class="tab-content" id="patches-list">
 {% for revision in revisions %}
     <div role="tabpanel" id="rev{{ revision.version }}"
          class="tab-pane fade{% if forloop.last %} in active{% endif %}">
@@ -87,8 +94,7 @@ $(function () {
         {% for patch in revision.patch_list %}
             <tr>
               <td></td>
-              <td><a href="{% url 'patchwork.views.patch.patch' patch_id=patch.id %}"
-                >{{ patch.name|default:"[no subject]"|truncatechars:100 }}</a></td>
+              <td><a href="#" class="patch-link" data-toggle="tooltip" title="Click to view the patch at bottom section"data-url="{% url 'patchwork.views.patch.patch' patch_id=patch.id %}">{{ patch.name|default:"[no subject]"|truncatechars:100 }}</a></td>
               <td>{{ patch.submitter|personify:project }}</td>
               <td>{{ patch.state }}</td>
             <tr>
@@ -101,7 +107,7 @@ $(function () {
     <h3>Tests</h3>
 
     <div class="well transparent">
-      <div class="panel-group" id="test-accordion" role="tablist" aria-multiselectable="true">
+      <div class="panel-group" id="test-accordion" role="tablist" aria-multiselectable="true" data-toggle="tooltip" title="Click to view/hide available test results">
         {% for test_result in revision.test_results %}
         {% include "patchwork/test-result.html" %}
         {% endfor %}
@@ -113,6 +119,8 @@ $(function () {
     </div>
 {% endfor %}
   </div>
+
+  <div id="patch-view" class="container-fluid"></div>
 
 </div>
 

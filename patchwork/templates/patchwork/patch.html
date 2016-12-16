@@ -7,6 +7,7 @@
 {% block title %}{{patch.name}}{% endblock %}
 
 {% block body %}
+
 <script type="text/javascript">
 function toggle_headers(link_id, headers_id)
 {
@@ -25,10 +26,12 @@ function toggle_headers(link_id, headers_id)
 
 }
 </script>
-
+<div id="patch-body">
 <h1>{{ patch.name }}</h1>
 <div class="core-info">
     <span>Submitted by {{ patch.submitter|personify:project }} on {{ patch.date }}</span>
+    <span>|</span>
+    <span>Patch ID: <strong>{{ patch.id }}</strong></span>
 </div>
 
 <h2>Details</h2>
@@ -134,10 +137,10 @@ function toggle_headers(link_id, headers_id)
       <form method="post">
        {% csrf_token %}
        <input type="hidden" name="action" value="addtobundle"/>
-       <select name="bundle_id"/>
-        {% for bundle in bundles %}
-         <option value="{{bundle.id}}">{{bundle.name}}</option>
-        {% endfor %}
+        <select name="bundle_id">
+         {% for bundle in bundles %}
+          <option value="{{bundle.id}}">{{bundle.name}}</option>
+         {% endfor %}
         </select>
        <input value="Add" type="submit"/>
       </form>
@@ -219,5 +222,5 @@ function toggle_headers(link_id, headers_id)
 </pre>
 </div>
 {% endfor %}
-
+</div>
 {% endblock %}
