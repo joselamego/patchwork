@@ -399,7 +399,8 @@ def find_content(project, mail):
     refs = build_references_list(mail)
     is_root = refs == []
     is_cover_letter = is_root and x == 0
-    is_patch = patchbuf is not None
+    patch_prefix = re.match('(\s*\[[^]]*\]\s*)*\[\s*PATCH', mail.get('Subject'))
+    is_patch = patchbuf is not None and patch_prefix
 
     drop_patch = not is_attachment and \
         project.git_send_email_only and not is_git_send_email(mail)
