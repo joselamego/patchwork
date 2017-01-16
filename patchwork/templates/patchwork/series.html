@@ -11,6 +11,24 @@ $(function () {
 });
 </script>
 <script type="text/javascript" src="{% static "js/series.js" %}"></script>
+<script type="text/javascript">
+function toggle_headers(link_id, headers_id)
+{
+    var link = document.getElementById(link_id)
+    var headers = document.getElementById(headers_id)
+
+    var hidden = headers.style['display'] == 'none';
+
+    if (hidden) {
+        link.innerHTML = 'hide';
+        headers.style['display'] = 'block';
+    } else {
+        link.innerHTML = 'show';
+        headers.style['display'] = 'none';
+    }
+
+}
+</script>
 {% endblock %}
 
 {% block body %}
