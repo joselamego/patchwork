@@ -23,9 +23,9 @@ install:
 
 before_script:
     - mysql -e 'create database patchwork;'
-    - export SELENIUM_BROWSER=firefox
     - export PW_TEST_DB_USER=travis
     - export PW_TEST_DB_PASS=""
+    - export PW_SKIP_BROWSER_TESTS=yes
     - env | grep ^TRAVIS
 
 script: ./tests/test_all.sh
