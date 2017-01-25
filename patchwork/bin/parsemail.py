@@ -822,7 +822,8 @@ def parse_mail(mail):
         # if comment's author has project-maintainer permissions,
         # parse comment content and process the status-change command
         # if it is found
-        if project in (author.user).profile.maintainer_projects.all():
+        if author.user and project in \
+                (author.user).profile.maintainer_projects.all():
             cmd = None
             comment_re = re.compile('^\[Patchwork-Status:\s*(Under Review|\
 Rejected|RFC|Not Applicable|Changes Requested|Awaiting Upstream|Superseded|\
