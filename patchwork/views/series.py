@@ -18,9 +18,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from django.conf import settings
-from django.shortcuts import render, get_object_or_404, get_list_or_404
+from django.shortcuts import render, render_to_response
+from django.shortcuts import get_object_or_404, get_list_or_404
+from django.http import HttpResponseForbidden
 from django.views.generic import View
-from patchwork.models import Project, Series, SeriesRevision, TestResult
+from patchwork.models import Patch, Project, Bundle
+from patchwork.models import Series, SeriesRevision, TestResult
+from patchwork.requestcontext import PatchworkRequestContext
+from patchwork.forms import PatchForm, CreateBundleForm
 
 
 class SeriesListView(View):
@@ -53,3 +58,78 @@ class SeriesView(View):
             'cover_letter': revision.cover_letter,
             'revisions': revisions,
         })
+
+    def post(self, request, *args, **kwargs):
+        init_data = request.POST
+        pa_id = init_data.get('patch', None)
+        curr_rev = init_data.get('rev', None)
+        patch = get_object_or_404(Patch, id=pa_id)
+        series = get_object_or_404(Series, pk=kwargs['series'])
+        context = PatchworkRequestContext(request)
+        context.project = patch.project
+        editable = patch.is_editable(request.user)
+
+        revisions = get_list_or_404(SeriesRevision, series=series)
+        for revision in revisions:
+            revision.patch_list = revision.ordered_patches().\
+                select_related('state', 'submitter')
+            revision.test_results = TestResult.objects \
+                    .filter(revision=revision, patch=None) \
+                    .order_by('test__name').select_related('test')
+
+        form = None
+        createbundleform = None
+
+        if editable:
+            form = PatchForm(instance=patch)
+        if request.user.is_authenticated():
+            createbundleform = CreateBundleForm()
+
+        if request.method == 'POST':
+            action = request.POST.get('action', None)
+            if action:
+                action = action.lower()
+
+            if action == 'createbundle':
+                bundle = Bundle(owner=request.user, project=patch.project)
+                createbundleform = CreateBundleForm(instance=bundle,
+                                                    data=request.POST)
+                if createbundleform.is_valid():
+                    createbundleform.save()
+                    bundle.append_patch(patch)
+                    bundle.save()
+                    createbundleform = CreateBundleForm()
+                    context.add_message('Bundle %s created' % bundle.name)
+
+            elif action == 'addtobundle':
+                bundle = get_object_or_404(
+                    Bundle, id=request.POST.get('bundle_id'))
+                try:
+                    bundle.append_patch(patch)
+                    bundle.save()
+                    context.add_message('Patch added to bundle "%s"' %
+                                        bundle.name)
+                except Exception as ex:
+                    context.add_message("Couldn't add patch '%s' to bundle %s:\
+ %s" % (patch.name, bundle.name, ex.message))
+
+            # all other actions require edit privs
+            elif not editable:
+                return HttpResponseForbidden()
+
+            elif action is None:
+                form = PatchForm(data=request.POST, instance=patch)
+                if form.is_valid():
+                    form.save()
+                    context.add_message('Patch ID: %s updated' % patch.pk)
+
+        context['series'] = series
+        context['patchform'] = form
+        context['createbundleform'] = createbundleform
+        context['project'] = patch.project
+        context['revisions'] = revisions
+        context['test_results'] = TestResult.objects \
+            .filter(revision=None, patch=patch) \
+            .order_by('test__name').select_related('test')
+
+        return render_to_response('patchwork/series.html', context)
