@@ -589,10 +589,16 @@ def find_patch_for_comment(project, refs):
 
 
 split_re = re.compile(r'[,\s]+')
-
+patch_pref = re.re.compile(r'^.*\[(\s*PATCH\w+).*', re.I)
 
 def split_prefixes(prefix):
     """ Turn a prefix string into a list of prefix tokens """
+
+    # Check if PATCH prefix is followed by anoter word without a sepparation
+    # space. Add missing space to allow appropriate parsing
+    if patch_pref.match(prefix):
+        index = prefix.find(patch_pref.match(prefix).group(1))
+        prefix = prefix[:index + 5] + ' ' + prefix[index + 5:]
 
     matches = split_re.split(prefix)
     return [s for s in matches if s != '']
