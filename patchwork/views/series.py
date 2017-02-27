@@ -26,7 +26,7 @@ from patchwork.models import Patch, Project, Bundle
 from patchwork.models import Series, SeriesRevision, TestResult
 from patchwork.requestcontext import PatchworkRequestContext
 from patchwork.forms import PatchForm, CreateBundleForm
-
+import json
 
 class SeriesListView(View):
 
@@ -45,6 +45,9 @@ class SeriesView(View):
     def get(self, request, *args, **kwargs):
         series = get_object_or_404(Series, pk=kwargs['series'])
         revisions = get_list_or_404(SeriesRevision, series=series)
+        patchform = PatchForm(project=series.project)
+        createbundleform = CreateBundleForm()
+        bundles = Bundle.objects.filter(owner=request.user)
         for revision in revisions:
             revision.patch_list = revision.ordered_patches().\
                 select_related('state', 'submitter')
@@ -57,19 +60,20 @@ class SeriesView(View):
             'project': series.project,
             'cover_letter': revision.cover_letter,
             'revisions': revisions,
+            'patchform': patchform,
+            'createbundleform': createbundleform,
+            'bundles': bundles,
         })
 
     def post(self, request, *args, **kwargs):
         init_data = request.POST
-        pa_id = init_data.get('patch', None)
-        curr_rev = init_data.get('rev', None)
-        patch = get_object_or_404(Patch, id=pa_id)
-        series = get_object_or_404(Series, pk=kwargs['series'])
-        context = PatchworkRequestContext(request)
-        context.project = patch.project
-        editable = patch.is_editable(request.user)
-
+        patches=json.loads(init_data.get('patches'))
+        series =get_object_or_404(Series, pk=kwargs['series'])
         revisions = get_list_or_404(SeriesRevision, series=series)
+        context = PatchworkRequestContext(request)
+        context.project = series.project
+        form = None
+        createbundleform = None
         for revision in revisions:
             revision.patch_list = revision.ordered_patches().\
                 select_related('state', 'submitter')
@@ -77,11 +81,6 @@ class SeriesView(View):
                     .filter(revision=revision, patch=None) \
                     .order_by('test__name').select_related('test')
 
-        form = None
-        createbundleform = None
-
-        if editable:
-            form = PatchForm(instance=patch)
         if request.user.is_authenticated():
             createbundleform = CreateBundleForm()
 
@@ -91,42 +90,57 @@ class SeriesView(View):
                 action = action.lower()
 
             if action == 'createbundle':
-                bundle = Bundle(owner=request.user, project=patch.project)
+                bundle = Bundle(owner=request.user, project=series.project)
                 createbundleform = CreateBundleForm(instance=bundle,
                                                     data=request.POST)
                 if createbundleform.is_valid():
                     createbundleform.save()
-                    bundle.append_patch(patch)
-                    bundle.save()
-                    createbundleform = CreateBundleForm()
-                    context.add_message('Bundle %s created' % bundle.name)
 
             elif action == 'addtobundle':
                 bundle = get_object_or_404(
                     Bundle, id=request.POST.get('bundle_id'))
-                try:
-                    bundle.append_patch(patch)
-                    bundle.save()
-                    context.add_message('Patch added to bundle "%s"' %
-                                        bundle.name)
-                except Exception as ex:
-                    context.add_message("Couldn't add patch '%s' to bundle %s:\
- %s" % (patch.name, bundle.name, ex.message))
 
-            # all other actions require edit privs
-            elif not editable:
-                return HttpResponseForbidden()
+            for pa_id in patches:
+                patch = get_object_or_404(Patch, id=pa_id)
+                editable = patch.is_editable(request.user)
 
-            elif action is None:
-                form = PatchForm(data=request.POST, instance=patch)
-                if form.is_valid():
-                    form.save()
-                    context.add_message('Patch ID: %s updated' % patch.pk)
+                if editable:
+                    form = PatchForm(instance=patch)
+
+                if action == 'createbundle':
+                    if createbundleform.is_valid():
+                        bundle.append_patch(patch)
+                        bundle.save()
+
+                elif action == 'addtobundle':
+                    try:
+                        bundle.append_patch(patch)
+                        bundle.save()
+                        context.add_message('Patch %s added to bundle "%s"' %
+                                            (patch.pk, bundle.name))
+                    except Exception as ex:
+                        context.add_message('Couldn\'t add patch %s to bundle\
+ "%s": %s' % (patch.pk, bundle.name, ex.message))
+
+                # all other actions require edit privs
+                elif not editable:
+                    return HttpResponseForbidden()
+
+                elif action is None:
+                    form = PatchForm(data=request.POST, instance=patch)
+                    if form.is_valid():
+                        form.save()
+                        context.add_message('Patch ID: %s updated' % patch.pk)
+
+            if action == 'createbundle':
+                createbundleform.save()
+                createbundleform = CreateBundleForm()
+                context.add_message('Bundle %s created' % bundle.name)
 
         context['series'] = series
         context['patchform'] = form
         context['createbundleform'] = createbundleform
-        context['project'] = patch.project
+        context['project'] = series.project
         context['revisions'] = revisions
         context['test_results'] = TestResult.objects \
             .filter(revision=None, patch=patch) \
